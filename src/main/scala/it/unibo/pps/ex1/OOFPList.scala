@@ -1,5 +1,8 @@
 package it.unibo.pps.ex1
 
+import scala.::
+import scala.collection.mutable.ListBuffer
+
 // List as a pure interface
 enum List[A]:
   case ::(h: A, t: List[A])
@@ -13,6 +16,7 @@ enum List[A]:
   def tail: Option[List[A]] = this match
     case h :: t => Some(t)
     case _ => None
+
   def foreach(consumer: A => Unit): Unit = this match
     case h :: t => consumer(h); t.foreach(consumer)
     case _ =>
@@ -34,7 +38,7 @@ enum List[A]:
     foldRight(list)(_ :: _)
 
   def flatMap[B](f: A => List[B]): List[B] =
-    foldRight(Nil())(f(_) append _)
+    foldLeft(Nil())((list, value) => list.append(f(value)))
 
   def filter(predicate: A => Boolean): List[A] = flatMap(a => if predicate(a) then a :: Nil() else Nil())
 
@@ -45,9 +49,18 @@ enum List[A]:
     case h :: t => t.foldLeft(h)(op)
   
   // Exercise: implement the following methods
-  def zipWithValue[B](value: B): List[(A, B)] = ???
-  def length(): Int = ???
-  def indices(): List[A] = ???
+  def zipWithValue[B](value: B): List[(A, B)] =
+    foldRight(Nil())((head, acc) => (head, value) :: acc)
+
+  def length(): Int = foldLeft(0)((acc, head) => acc + 1)
+
+  def indices(): List[Int] = foldLeft(Nil())((acc, head) => (acc.length() - this.length()).abs - 1 :: acc)
+
+    //_indices(this, 0)
+//    private def _indices(list: List[A], i: Int): List[Int] = list match
+//      case head :: tail => i :: _indices(tail, i + 1)
+//      case _ => Nil()
+
   def zipWithIndex: List[(A, Int)] = ???
   def partition(predicate: A => Boolean): (List[A], List[A]) = ???
   def span(predicate: A => Boolean): (List[A], List[A]) = ???
@@ -55,6 +68,17 @@ enum List[A]:
   def collect(predicate: PartialFunction[A, A]): List[A] = ???
 // Factories
 object List:
+
+  def unzip[A, B](list: List[(A, B)]): (List[A], List[B]) = list match
+    case (left, right) :: rest =>
+      val (leftList, rightList) = unzip(rest)
+      (left :: leftList, right :: rightList)
+    case _ => (Nil(), Nil())
+
+  def unzipWithFold[A, B](list: List[(A, B)]): (List[A], List[B]) =
+    list.foldRight[(List[A], List[B])]((Nil(), Nil())) {
+      case ((left, right), (leftList, rightList)) => (left :: leftList, right:: rightList)
+    }
 
   def apply[A](elems: A*): List[A] =
     var list: List[A] = Nil()
