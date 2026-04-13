@@ -49,23 +49,23 @@ enum List[A]:
     case h :: t => t.foldLeft(h)(op)
   
   // Exercise: implement the following methods
-  def zipWithValue[B](value: B): List[(A, B)] =
-    foldRight(Nil())((head, acc) => (head, value) :: acc)
+  def zipWithValue[B](value: B): List[(A, B)] = foldRight(Nil())((head, acc) => (head, value) :: acc)
 
   def length(): Int = foldLeft(0)((acc, head) => acc + 1)
 
-  def indices(): List[Int] = foldLeft(Nil())((acc, head) => (acc.length() - this.length()).abs - 1 :: acc)
+  def indices(): List[Int] = foldLeft(Nil())((acc, head) => (acc.length() - (this.length() - 1)).abs :: acc)
 
-    //_indices(this, 0)
-//    private def _indices(list: List[A], i: Int): List[Int] = list match
-//      case head :: tail => i :: _indices(tail, i + 1)
-//      case _ => Nil()
+  def zipWithIndex: List[(A, Int)] = foldRight(Nil())((head, acc) => (head, (acc.length() - (this.length() - 1)).abs) :: acc)
 
-  def zipWithIndex: List[(A, Int)] = ???
-  def partition(predicate: A => Boolean): (List[A], List[A]) = ???
+  def partition(predicate: A => Boolean): (List[A], List[A]) =
+    (this.filter(predicate), foldRight(Nil())((head, acc) => if predicate(head) then acc else head :: acc))
+
   def span(predicate: A => Boolean): (List[A], List[A]) = ???
-  def takeRight(n: Int): List[A] = ???
-  def collect(predicate: PartialFunction[A, A]): List[A] = ???
+
+  def takeRight(n: Int): List[A] = zipWithIndex.filter((a, i) => i > this.length() - 1 - n).map((a, _) => a)
+
+  def collect(predicate: PartialFunction[A, A]): List[A] = foldRight(Nil())((head, acc) => if predicate.isDefinedAt(head) then predicate(head) :: acc else acc)
+
 // Factories
 object List:
 
@@ -96,7 +96,7 @@ object Test extends App:
   println(reference.indices()) // List(0, 1, 2, 3)
   println(reference.zipWithIndex) // List((1, 0), (2, 1), (3, 2), (4, 3))
   println(reference.partition(_ % 2 == 0)) // (List(2, 4), List(1, 3))
-  println(reference.span(_ % 2 != 0)) // (List(1), List(2, 3, 4))
-  println(reference.span(_ < 3)) // (List(1, 2), List(3, 4))
   println(reference.takeRight(3)) // List(2, 3, 4)
   println(reference.collect { case x if x % 2 == 0 => x + 1 }) // List(3, 5)
+  println(reference.span(_ % 2 != 0)) // (List(1), List(2, 3, 4))
+  println(reference.span(_ < 3)) // (List(1, 2), List(3, 4))
