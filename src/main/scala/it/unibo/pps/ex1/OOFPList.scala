@@ -69,7 +69,8 @@ enum List[A]:
 
   def span2 (predicate: A => Boolean): (List[A], List[A]) =
     val res = zipWithIndex.partition((a, i) => predicate(a))
-    (res(0).filter((_, i) => i.equals(this.indices().get(i))).map((a, _) => a), res(0).filter((_, i) => !i.equals(this.indices().get(i))).map((a, _) => a).append(res(1).map((a, _) => a)))
+    (res(0).zipWithIndex.filter((t, pos) => t(1).equals(pos)).map((t, _) => t(0)),
+      res(0).zipWithIndex.filter((t, pos) => !t(1).equals(pos)).map((t, _) => t(0)).append(res(1).map((a, _) => a)))
 
   def takeRight(n: Int): List[A] = zipWithIndex.filter((a, i) => i > this.length() - 1 - n).map((a, _) => a)
 
