@@ -1,6 +1,7 @@
 package it.unibo.pps.ex1
 
 import scala.::
+import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
 // List as a pure interface
@@ -60,7 +61,15 @@ enum List[A]:
   def partition(predicate: A => Boolean): (List[A], List[A]) =
     (this.filter(predicate), foldRight(Nil())((head, acc) => if predicate(head) then acc else head :: acc))
 
-  def span(predicate: A => Boolean): (List[A], List[A]) = ???
+  def span(predicate: A => Boolean): (List[A], List[A]) = _span(Nil(), predicate)
+    @tailrec
+    private def _span(acc: List[A], pred: A => Boolean): (List[A], List[A]) = this match
+      case h :: t => if pred(h) then t._span(acc.append(h::Nil()), pred) else (acc, this)
+      case _ => (acc, Nil())
+
+  def span2 (predicate: A => Boolean): (List[A], List[A]) =
+    val res = zipWithIndex.partition((a, i) => predicate(a))
+    (res(0).filter((_, i) => i.equals(this.indices().get(i))).map((a, _) => a), res(0).filter((_, i) => !i.equals(this.indices().get(i))).map((a, _) => a).append(res(1).map((a, _) => a)))
 
   def takeRight(n: Int): List[A] = zipWithIndex.filter((a, i) => i > this.length() - 1 - n).map((a, _) => a)
 
@@ -98,5 +107,5 @@ object Test extends App:
   println(reference.partition(_ % 2 == 0)) // (List(2, 4), List(1, 3))
   println(reference.takeRight(3)) // List(2, 3, 4)
   println(reference.collect { case x if x % 2 == 0 => x + 1 }) // List(3, 5)
-  println(reference.span(_ % 2 != 0)) // (List(1), List(2, 3, 4))
-  println(reference.span(_ < 3)) // (List(1, 2), List(3, 4))
+  println(reference.span2(_ % 2 != 0)) // (List(1), List(2, 3, 4))
+  println(reference.span2(_ < 3)) // (List(1, 2), List(3, 4))
