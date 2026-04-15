@@ -22,7 +22,7 @@ class ConferenceReviewingImpl extends ConferenceReviewing:
   private var reviews: List[Pair[Int, Map[Question, Int]]] = List()
 
   override def loadReview(article: Int, scores: Map[Question, Int]): Unit =
-    require(scores.size < Question.values.length)
+    require(scores.size == Question.values.length)
     reviews = reviews.+:(Pair(article, scores))
 
   override def loadReview(article: Int, relevance: Int, significance: Int, confidence: Int, fin: Int): Unit =
@@ -36,24 +36,20 @@ class ConferenceReviewingImpl extends ConferenceReviewing:
   override def orderedScores(article: Int, question: Question): List[Int] =
     reviews
       .filter(p => p.getX == article)
-      .map(p => p.getY.get(question))
-      .sorted()
-      .map(a => a.getOrElse(-1))
+      .flatMap(_.getY.get(question))
+      .sorted
 
   override def averageFinalScore(article: Int): Double =
-    reviews
-      .filter(p => p.getX == article)
-      .map(p => p.getY.get(Question.Final))
-      .map(optional => optional.getOrElse(0))
-      .foldLeft(0.0)(_+_)
-      ./(reviews.length)
+    val averageScore = reviews
+      .filter(_.getX == article)
+      .map(_.getY.getOrElse(Question.Final, 0).toDouble)
+    averageScore.sum / averageScore.length
 
   private def accepted(article: Int): Boolean =
-    averageFinalScore(article) > 0.5 &&
+    averageFinalScore(article) > 5 &&
       reviews
         .filter(p => p.getX == article)
-        .map(p => p.getY.toMap)
-        .foldLeft(false)((acc, head) => head.getOrElse(Question.Relevance, -1) >= 8)
+        .exists(p => p.getY.getOrElse(Question.Relevance, 0) >= 8)
 
   override def acceptedArticles(): Set[Int] =
     reviews
@@ -66,14 +62,13 @@ class ConferenceReviewingImpl extends ConferenceReviewing:
     acceptedArticles()
       .map(e => Pair(e, averageFinalScore(e)))
       .toList
-      .sorted((e1, e2) => e1.getY.compareTo(e2.getY))
+      .sortBy(p => p.getY)
 
   private def averageWeightedFinalScore(article: Int): Double =
-    reviews
+    val averageScore = reviews
       .filter(p => p.getX == article)
       .map(p => p.getY.getOrElse(Question.Final, 0) * p.getY.getOrElse(Question.Confidence, 0) / 10.0)
-      .foldLeft(0.0)(_ + _)
-      ./(reviews.length)
+    averageScore.sum / averageScore.length
 
   override def averageWeightedFinalScoreMap(): Map[Int, Double] =
     reviews
