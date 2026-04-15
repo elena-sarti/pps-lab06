@@ -59,15 +59,15 @@ enum List[A]:
   def zipWithIndex: List[(A, Int)] = foldRight(Nil())((head, acc) => (head, (acc.length() - (this.length() - 1)).abs) :: acc)
 
   def partition(predicate: A => Boolean): (List[A], List[A]) =
-    (this.filter(predicate), foldRight(Nil())((head, acc) => if predicate(head) then acc else head :: acc))
+    (this.filter(predicate), this.filter(x => !predicate(x)))
 
-  def span(predicate: A => Boolean): (List[A], List[A]) = _span(Nil(), predicate)
-    @tailrec
-    private def _span(acc: List[A], pred: A => Boolean): (List[A], List[A]) = this match
-      case h :: t => if pred(h) then t._span(acc.append(h::Nil()), pred) else (acc, this)
-      case _ => (acc, Nil())
+//  def span(predicate: A => Boolean): (List[A], List[A]) = _span(Nil(), predicate)
+//    @tailrec
+//    private def _span(acc: List[A], pred: A => Boolean): (List[A], List[A]) = this match
+//      case h :: t => if pred(h) then t._span(acc.append(h::Nil()), pred) else (acc, this)
+//      case _ => (acc, Nil())
 
-  def span2 (predicate: A => Boolean): (List[A], List[A]) =
+  def span(predicate: A => Boolean): (List[A], List[A]) =
     val res = zipWithIndex.partition((a, i) => predicate(a))
     (res(0).zipWithIndex.filter((t, pos) => t(1).equals(pos)).map((t, _) => t(0)),
       res(0).zipWithIndex.filter((t, pos) => !t(1).equals(pos)).map((t, _) => t(0)).append(res(1).map((a, _) => a)))
@@ -108,5 +108,5 @@ object Test extends App:
   println(reference.partition(_ % 2 == 0)) // (List(2, 4), List(1, 3))
   println(reference.takeRight(3)) // List(2, 3, 4)
   println(reference.collect { case x if x % 2 == 0 => x + 1 }) // List(3, 5)
-  println(reference.span2(_ % 2 != 0)) // (List(1), List(2, 3, 4))
-  println(reference.span2(_ < 3)) // (List(1, 2), List(3, 4))
+  println(reference.span(_ % 2 != 0)) // (List(1), List(2, 3, 4))
+  println(reference.span(_ < 3)) // (List(1, 2), List(3, 4))
