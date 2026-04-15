@@ -61,11 +61,12 @@ enum List[A]:
   def partition(predicate: A => Boolean): (List[A], List[A]) =
     (this.filter(predicate), this.filter(x => !predicate(x)))
 
-//  def span(predicate: A => Boolean): (List[A], List[A]) = _span(Nil(), predicate)
+//  def span(predicate: A => Boolean): (List[A], List[A]) =
 //    @tailrec
 //    private def _span(acc: List[A], pred: A => Boolean): (List[A], List[A]) = this match
 //      case h :: t => if pred(h) then t._span(acc.append(h::Nil()), pred) else (acc, this)
 //      case _ => (acc, Nil())
+//    _span(Nil(), predicate)
 
   def span(predicate: A => Boolean): (List[A], List[A]) =
     val res = zipWithIndex.partition((a, i) => predicate(a))
